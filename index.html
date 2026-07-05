@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Spin Wheel Game</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #ff9f1c, #2ec4b6 40%, #1a2a6c);
+      color: #fff;
+    }
+
+    .app {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      max-width: 900px;
+      width: 100%;
+      padding: 20px;
+    }
+
+    /* Left side – wheel */
+    .wheel-area {
+      flex: 1;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .wheel-wrapper {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 10px auto;
+    }
+
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: transform 4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      background: radial-gradient(circle at center, #222, #000);
+    }
+
+    .center-cap {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle at top, #ffd166, #f94144);
+      border: 4px solid rgba(255, 255, 255, 0.9);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+    }
+
+    .pointer {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-bottom: 28px solid #fff;
+      filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    .slice {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 0%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px;
+      color: #fff;
+      font-size: 0.8rem;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .slice-label {
+      transform-origin: center;
+    }
+
+    .wheel-controls {
+      margin-top: 12px;
+    }
+
+    button {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #ffb703;
+      color: #000;
+      transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
+      margin: 0 6px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    button:hover {
+      transform: scale(1.04);
+      background: #ff9f1c;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .spin-btn {
+      background: linear-gradient(135deg, #ffd166, #f94144);
+      color: #fff;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 1rem;
+      min-height: 24px;
+    }
+
+    /* Right side – list & input */
+    .side-panel {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .side-panel h2 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      margin-bottom: 8px;
+    }
+
+    .items-list {
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 6px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.9rem;
+    }
+
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-label {
+      flex: 1;
+    }
+
+    .item-remove {
+      margin-left: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #e63946;
+      color: #fff;
+    }
+
+    .item-remove:hover {
+      background: #ff0e3a;
+    }
+
+    .empty-text {
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT: Wheel -->
+    <div class="wheel-area">
+      <h1>Spin Wheel Game</h1>
+
+      <div class="wheel-wrapper">
+        <div class="pointer"></div>
+        <div class="wheel" id="wheel">
+          <div class="center-cap"></div>
+        </div>
+      </div>
+
+      <div class="wheel-controls">
+        <button class="spin-btn" id="spin">Spin</button>
+      </div>
+
+      <div class="result" id="result"></div>
+    </div>
+
+    <!-- RIGHT: Items control -->
+    <div class="side-panel">
+      <h2>Wheel Items</h2>
+      <div class="hint">
+        Add things (e.g. tasks, prizes, names). Click X to remove. The wheel updates automatically.
+      </div>
+
+      <div class="input-row">
+        <input
+          id="newItemInput"
+          placeholder="Type item here (e.g. Pizza)"
+        />
+        <button id="addItemBtn">Add</button>
+      </div>
+
+      <div class="items-list" id="itemsList"></div>
+    </div>
+  </div>
+
+  <script>
+    const wheelEl = document.getElementById("wheel");
+    const spinBtn = document.getElementById("spin");
+    const resultEl = document.getElementById("result");
+
+    const newItemInput = document.getElementById("newItemInput");
+    const addItemBtn = document.getElementById("addItemBtn");
+    const itemsListEl = document.getElementById("itemsList");
+
+    // Default items – change or clear them
+    let items = ["Study", "Play", "Eat", "Sleep", "Code", "Music"];
+
+    let isSpinning = false;
+    let currentRotation = 0;
+
+    function renderItemsList() {
+      itemsListEl.innerHTML = "";
+
+      if (items.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-text";
+        empty.textContent = "No items. Add something to spin.";
+        itemsListEl.appendChild(empty);
+        return;
+      }
+
+      items.forEach((text, index) => {
+        const row = document.createElement("div");
+        row.className = "item-row";
+
+        const label = document.createElement("span");
+        label.className = "item-label";
+        label.textContent = text;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "item-remove";
+        removeBtn.textContent = "X";
+        removeBtn.addEventListener("click", () => {
+          items.splice(index, 1);
+          renderItemsList();
+          renderWheel();
+        });
+
+        row.appendChild(label);
+        row.appendChild(removeBtn);
+        itemsListEl.appendChild(row);
+      });
+    }
+
+    function renderWheel() {
+      wheelEl.querySelectorAll(".slice").forEach(el => el.remove());
+
+      const sliceCount = items.length;
+      if (sliceCount === 0) {
+        resultEl.textContent = "Add items to spin.";
+        return;
+      }
+
+      const angle = 360 / sliceCount;
+      const colors = [
+        "#ff595e",
+        "#8ac926",
+        "#1982c4",
+        "#ffca3a",
+        "#6a4c93",
+        "#fb5607",
+        "#1b9aaa",
+        "#e71d36"
+      ];
+
+      items.forEach((text, index) => {
+        const slice = document.createElement("div");
+        slice.className = "slice";
+
+        const startAngle = angle * index;
+        slice.style.transform =
+          "rotate(" + startAngle + "deg) skewY(" + (90 - angle) + "deg)";
+        slice.style.backgroundColor = colors[index % colors.length];
+
+        const label = document.createElement("div");
+        label.className = "slice-label";
+        label.style.transform = "skewY(" + (angle - 90) + "deg)";
+        label.textContent = text;
+
+        slice.appendChild(label);
+        wheelEl.appendChild(slice);
+      });
+    }
+
+    function getRandomRotation() {
+      const extra = Math.floor(Math.random() * 360);
+      return 360 * (5 + Math.floor(Math.random() * 3)) + extra;
+    }
+
+    function spinWheel() {
+      if (isSpinning || items.length === 0) return;
+      isSpinning = true;
+      resultEl.textContent = "Spinning...";
+
+      const rotation = getRandomRotation();
+      currentRotation = (currentRotation + rotation) % 360;
+
+      wheelEl.style.transform = "rotate(" + currentRotation + "deg)";
+
+      setTimeout(() => {
+        isSpinning = false;
+
+        const sliceCount = items.length;
+        const angle = 360 / sliceCount;
+
+        const normalized = (360 - currentRotation + angle / 2) % 360;
+        const index = Math.floor(normalized / angle);
+        const winner = items[index];
+
+        resultEl.textContent = "Selected: " + winner;
+      }, 4000);
+    }
+
+    function addItem() {
+      const text = newItemInput.value.trim();
+      if (!text) return;
+
+      items.push(text);
+      newItemInput.value = "";
+      renderItemsList();
+      renderWheel();
+      resultEl.textContent = "Item added. Press Spin!";
+    }
+
+    spinBtn.addEventListener("click", spinWheel);
+    addItemBtn.addEventListener("click", addItem);
+    newItemInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addItem();
+    });
+
+    renderItemsList();
+    renderWheel();
+  </script>
+</body>
+</html>
